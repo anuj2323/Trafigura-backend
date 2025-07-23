@@ -17,4 +17,5 @@ public interface EquityRepo extends JpaRepository<TransactionEntity, Long> {
     TransactionEntity findTopBySecurityCodeOrderByVersionDesc(String securityCode);
 
     List<TransactionEntity> findBySecurityCode(String securityCode);
+    TransactionEntity findTopByOrderByTransactionIdDesc();
 }

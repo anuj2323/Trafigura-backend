@@ -31,15 +31,25 @@ public class EquityService {
     public Transaction save(Transaction transaction) {
         try {
             TransactionEntity entity;
-            if(transaction.getTradeId() == null){
+            TransactionEntity latestInserted = equityRepo.findTopByOrderByTransactionIdDesc();
+
+            boolean isNewTrade = latestInserted != null &&
+                    "CANCEL".equalsIgnoreCase(String.valueOf(latestInserted.getAction()));
+
+            if(!equityRepo.existsBySecurityCode(transaction.getSecurityCode()) || isNewTrade) {
                 int tradeId = getNextTradeId();
                 transaction.setTradeId(tradeId);
                 entity = mapToEntity(transaction, 1);
                 equityRepo.save(entity);
             } else {
                 TransactionEntity latest = equityRepo.findTopBySecurityCodeOrderByVersionDesc(transaction.getSecurityCode());
-                int newVersion = (latest != null && latest.getVersion() != null) ? latest.getVersion() + 1 : 1;
+
+                int tradeId = latest.getTradeId();
+                int newVersion = (latest.getVersion() != null) ? latest.getVersion() + 1 : 1;
+
                 entity = mapToEntity(transaction, newVersion);
+                entity.setTradeId(tradeId);
+                entity.setTransactionId(null);
                 equityRepo.save(entity);
             }
             // Update position after saving transaction
